@@ -1,0 +1,5 @@
+C:\Users\Nelmar\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_beep-1.0.0\android\build.gradle
+
+
+D:\FlutterAppProjects\quizter_app_v1\build\audioplayers_android
+Delete all files 
