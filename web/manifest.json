@@ -1,6 +1,6 @@
 {
-    "name": "quizter_app_v3",
-    "short_name": "quizter_app_v3",
+    "name": "maquizta",
+    "short_name": "maquizta",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

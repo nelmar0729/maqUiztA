@@ -18,14 +18,14 @@ abstract class RemoteDataSource {
   Future<ResponseResult> joinSubject(String userId, String code);
 
   Future<List<QuizModel>> fetchQuizzes(String userId);
-  Future<List<QuestionModel>> fetchQuestions(int quizId);
   Future<ResponseResult> studentAnswer(
     String userId,
     int quizId,
     int questionId,
     int choiceId,
   );
-  Future<List<LeaderboardUser>> leaderboardByQuiz(int quizId);
+  Future<List<LeaderboardUser>> leaderboardByQuiz(int quizId, String userId);
+  Future<List<QuestionModel>> fetchQuestions(int quizId, String userId);
   // You can add more methods here, like:
   // Future<UserModel> register(...);
   // Future<UserModel> getUserById(int userId);
@@ -95,13 +95,18 @@ class RemoteDataSourceImpl implements RemoteDataSource {
   }
 
   @override
-  Future<List<QuestionModel>> fetchQuestions(int quizId) async {
+  Future<List<QuestionModel>> fetchQuestions(int quizId, String userId) async {
     try {
       final response = await http.post(
         Uri.parse(AppConstants.quizzesEndpoint),
         headers: AppConstants.defaultHeaders, // <-- use shared headers
-        body: {'quiz_id': quizId.toString(), 'action': "fetchQuestions"},
+        body: {
+          'quiz_id': quizId.toString(),
+          'userId': userId,
+          'action': "fetchQuestions",
+        },
       );
+     
 
       if (response.body.trim().startsWith("{") ||
           response.body.trim().startsWith("[")) {
@@ -158,14 +163,21 @@ class RemoteDataSourceImpl implements RemoteDataSource {
   }
 
   @override
-  Future<List<LeaderboardUser>> leaderboardByQuiz(int quizId) async {
+  Future<List<LeaderboardUser>> leaderboardByQuiz(
+    int quizId,
+    String userId,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse(AppConstants.quizzesEndpoint),
         headers: AppConstants.defaultHeaders, // <-- use shared headers
-        body: {'quiz_id': quizId.toString(), 'action': "leaderboardByQuiz"},
+        body: {
+          'quiz_id': quizId.toString(),
+          'user_id': userId,
+          'action': "leaderboardByQuiz",
+        },
       );
-
+      // print(response.body);
       if (response.body.trim().startsWith("{") ||
           response.body.trim().startsWith("[")) {
         final data = json.decode(response.body);

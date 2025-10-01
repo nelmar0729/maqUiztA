@@ -1,8 +1,6 @@
 import '../models/quiz_history_model.dart';
 import '/shared/response.dart';
 import '../models/user_model.dart';
-import 'dart:io';
-
 
 /// This is the interface (contract) for your Repository.
 /// It lists all the methods you want your authentication system to provide.
@@ -14,7 +12,7 @@ abstract class Repository {
     String lastname,
     String studentId,
     String email,
-    File? avatar, // <-- File type for image, nullable if not changed
+    dynamic avatar, // <-- File type for image, nullable if not changed
     int programId,
     String yearLevel,
     String section,
@@ -30,7 +28,7 @@ abstract class Repository {
     String userId,
   );
 
-  Future<ResponseResult> verifyEmail(String email, String token);
+  Future<ResponseResult> verifyEmail(String email, String token, String userId);
   Future<List<QuizHistoryModel>> getQuizHistory(String userId);
   // You can add more contracts like:
   // Future<User> register(...);

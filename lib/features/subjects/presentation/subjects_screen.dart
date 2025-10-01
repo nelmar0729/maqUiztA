@@ -1,3 +1,5 @@
+import 'package:maquizta/core/routes/app_router.dart';
+
 import '/shared/util/network_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:auto_route/auto_route.dart';
@@ -112,7 +114,7 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
                   context: context,
                   builder: (context) => _JoinSubjectDialog(
                     onSuccess: (subject) {
-                      // After joining, refresh subjects from backend!
+                      // ✅ Will run immediately after join success
                       fetchSubjects();
                     },
                   ),
@@ -122,12 +124,7 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
 
             const SizedBox(height: 28),
             const Divider(height: 32, thickness: 1.2),
-            Text(
-              "Joined Subjects",
-              style: AppTextStyles.titleLarge.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+
             const SizedBox(height: 10),
             _loadingSubjects
                 ? const Center(child: CircularProgressIndicator())
@@ -143,20 +140,27 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
                         .map(
                           (subject) => Card(
                             margin: const EdgeInsets.symmetric(vertical: 6),
-                            child: ListTile(
-                              leading: const Icon(
-                                Icons.book,
-                                color: AppColors.primary,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () {
+                                // Handle subject tap if needed
+                                context.router.push(SubjectDetailRoute(subject: subject));
+                              },
+                              child: ListTile(
+                                leading: const Icon(
+                                  Icons.book,
+                                  color: AppColors.primary,
+                                ),
+                                title: Text(
+                                  subject.subjectName,
+                                  style: AppTextStyles.bodyLarge,
+                                ),
+                                subtitle: Text(
+                                  "Code: ${subject.subjectCode}\nInstructor: ${subject.instructor}",
+                                  style: AppTextStyles.bodyMedium,
+                                ),
+                                isThreeLine: true,
                               ),
-                              title: Text(
-                                subject.subjectName,
-                                style: AppTextStyles.bodyLarge,
-                              ),
-                              subtitle: Text(
-                                "Code: ${subject.subjectCode}\nInstructor: ${subject.instructor}",
-                                style: AppTextStyles.bodyMedium,
-                              ),
-                              isThreeLine: true,
                             ),
                           ),
                         )
@@ -222,9 +226,14 @@ class _JoinSubjectDialogState extends State<_JoinSubjectDialog> {
 
       if (!context.mounted) return;
       if (result.success) {
-        // No data usage here!
         AppSnack.show(context, result.message, SnackType.success);
-        Navigator.of(context).pop(); // Close modal
+
+        // ✅ Notify parent before closing
+        if (widget.onSuccess != null) {
+          widget.onSuccess!({"subjectCode": code, "message": result.message});
+        }
+
+        Navigator.of(context).pop(); // Close dialog
       } else {
         setState(() {
           _errorText = result.message;

@@ -3,7 +3,6 @@ import '/features/profile/data/repositories/repository.dart';
 import '../datasources/data_source.dart';
 import '/shared/response.dart';
 import '../models/user_model.dart';
-import 'dart:io';
 import '../models/quiz_history_model.dart';
 
 /// This class connects your business logic (domain) to your actual data source (API).
@@ -23,7 +22,7 @@ class RepositoryImpl implements Repository {
     String lastname,
     String studentId,
     String email,
-    File? avatar, // <-- File type for image, nullable if not changed
+    dynamic avatar, // <-- File type for image, nullable if not changed
     int programId,
     String yearLevel,
     String section,
@@ -63,8 +62,12 @@ class RepositoryImpl implements Repository {
   }
 
   @override
-  Future<ResponseResult> verifyEmail(String email, String token) {
-    return remoteDataSource.verifyEmail(email, token);
+  Future<ResponseResult> verifyEmail(
+    String email,
+    String token,
+    String userId,
+  ) {
+    return remoteDataSource.verifyEmail(email, token, userId);
   }
 
   @override

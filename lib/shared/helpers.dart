@@ -149,7 +149,7 @@ class AppHelpers {
     double volume = 1.0,
   }) async {
     final player = audioPlayer ?? AudioPlayer();
-    await player.play(AssetSource('sounds/Beep.mp3'), volume: volume);
+    await player.play(AssetSource('sounds/count1.mp3'), volume: volume);
   }
 
   /// Plays any custom sound from assets.

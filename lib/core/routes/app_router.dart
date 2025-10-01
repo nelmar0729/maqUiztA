@@ -51,6 +51,10 @@ import '/features/home/presentation/homescreen.dart';
 
 /**subjects */
 import '/features/subjects/presentation/subjects_screen.dart';
+import '/features/subjects/presentation/_subject_detail.dart';
+import '/features/subjects/data/models/subject_model.dart';
+import '/features/subjects/presentation/_subject_quizzes.dart';
+import '/features/subjects/presentation/_subject_modules_screen.dart';
 /**End subjects */
 
 /**Profile */
@@ -79,6 +83,8 @@ part 'app_router.gr.dart';
 class AppRouter extends RootStackRouter {
   // Create an instance of your guard (can be passed via constructor if needed)
   final _authGuard = AuthGuard(GetIt.I<LocalAuthDataSource>());
+  @override
+  final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   List<AutoRoute> get routes => [
@@ -108,6 +114,10 @@ class AppRouter extends RootStackRouter {
     AutoRoute(page: EditProfileRoute.page),
     AutoRoute(page: LeaderboardRoute.page),
     AutoRoute(page: NewEmailVerificationRoute.page),
+    AutoRoute(page: SubjectDetailRoute.page),
+    AutoRoute(page: SubjectQuizzesRoute.page),
+    AutoRoute(page: SubjectModulesRoute.page),
+
     // ...other routes!
   ];
 }

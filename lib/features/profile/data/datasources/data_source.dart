@@ -1,4 +1,5 @@
 // lib/features/auth/data/datasources/auth_remote_data_source.dart
+import 'dart:typed_data';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/user_model.dart';
@@ -20,7 +21,7 @@ abstract class DataSource {
     String lastname,
     String studentId,
     String email,
-    File? avatar, // <-- File type for image, nullable if not changed
+    dynamic avatar, // 👈 changed from File? to dynamic
     int programId,
     String yearLevel,
     String section,
@@ -34,7 +35,7 @@ abstract class DataSource {
     String confirmPassword,
     String userId,
   );
-  Future<ResponseResult> verifyEmail(String email, String token);
+  Future<ResponseResult> verifyEmail(String email, String token, String userId);
   Future<List<QuizHistoryModel>> getQuizHistory(String userId);
   // You can add more methods here, like:
   // Future<UserModel> register(...);
@@ -54,7 +55,7 @@ class DataSourceImpl implements DataSource {
     String lastname,
     String studentId,
     String email,
-    File? avatar,
+    dynamic avatar, // 👈 changed from File? to dynamic
     int programId,
     String yearLevel,
     String section,
@@ -77,10 +78,23 @@ class DataSourceImpl implements DataSource {
         ..fields['user_id'] = userId
         ..fields['action'] = "updateUserData";
 
+      // 👇 Handle avatar depending on type
       if (avatar != null) {
-        request.files.add(
-          await http.MultipartFile.fromPath('avatar', avatar.path),
-        );
+        if (avatar is File) {
+          // Mobile/Desktop
+          request.files.add(
+            await http.MultipartFile.fromPath('avatar', avatar.path),
+          );
+        } else if (avatar is Uint8List) {
+          // Web
+          request.files.add(
+            http.MultipartFile.fromBytes(
+              'avatar',
+              avatar,
+              filename: "avatar.png",
+            ),
+          );
+        }
       }
 
       final streamedResponse = await request.send();
@@ -173,12 +187,21 @@ class DataSourceImpl implements DataSource {
   }
 
   @override
-  Future<ResponseResult> verifyEmail(String email, String token) async {
+  Future<ResponseResult> verifyEmail(
+    String email,
+    String token,
+    String userId,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse(AppConstants.profileEndpoint),
         headers: AppConstants.defaultHeaders, // <-- use shared headers
-        body: {'email': email, 'token': token, 'action': "verifyEmail"},
+        body: {
+          'email': email,
+          'token': token,
+          'user_id': userId,
+          'action': "verifyEmail",
+        },
       );
 
       if (response.body.trim().startsWith("{") ||

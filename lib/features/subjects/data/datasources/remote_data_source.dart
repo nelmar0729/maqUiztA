@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import '/shared/constants.dart';
 import '/shared/response.dart';
 import '/features/subjects/data/models/subject_model.dart';
+import '/features/quizzes/data/models/quiz_model.dart';
+import '/features/subjects/data/models/module_model.dart';
 
 /// This abstract class is like a "contract" for how to get user data from an API.
 /// It says: "Any class that implements me MUST have a login method that returns a UserModel."
@@ -16,6 +18,14 @@ abstract class RemoteDataSource {
   Future<ResponseResult> joinSubject(String userId, String code);
 
   Future<List<SubjectModel>> fetchSubjects(String userId);
+  Future<List<QuizModel>> fetchQuizzesBySubject(
+    String facultySubjectId,
+    String userId,
+  );
+  Future<List<ModuleModel>> fetchModules(
+    String userId,
+    String facultySubjectId,
+  );
   // You can add more methods here, like:
   // Future<UserModel> register(...);
   // Future<UserModel> getUserById(int userId);
@@ -65,7 +75,6 @@ class RemoteDataSourceImpl implements RemoteDataSource {
         Uri.parse(AppConstants.subjectEndpoint),
         body: {'user_id': userId, 'action': "fetchSubjects"},
       );
-
       if (response.body.trim().startsWith("{") ||
           response.body.trim().startsWith("[")) {
         final data = json.decode(response.body);
@@ -74,6 +83,71 @@ class RemoteDataSourceImpl implements RemoteDataSource {
           return subjectList
               .map((json) => SubjectModel.fromJson(json))
               .toList();
+        } else {
+          throw Exception(data['message'] ?? AppConstants.errorGeneric);
+        }
+      } else {
+        throw Exception("Server returned HTML instead of JSON.");
+      }
+    } catch (e) {
+      throw Exception("Exception: $e");
+    }
+  }
+
+  @override
+  Future<List<QuizModel>> fetchQuizzesBySubject(
+    String facultySubjectId,
+    String userId,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse(AppConstants.subjectEndpoint),
+        headers: AppConstants.defaultHeaders, // <-- use shared headers
+        body: {
+          'faculty_subject_id': facultySubjectId,
+          'user_id': userId,
+          'action': "fetchQuizzesBySubject",
+        },
+      );
+
+      if (response.body.trim().startsWith("{") ||
+          response.body.trim().startsWith("[")) {
+        final data = json.decode(response.body);
+        if (response.statusCode == 200 && data['error'] != true) {
+          final List<dynamic> list = data['data'];
+          return list.map((json) => QuizModel.fromJson(json)).toList();
+        } else {
+          throw Exception(data['message'] ?? AppConstants.errorGeneric);
+        }
+      } else {
+        throw Exception("Server returned HTML instead of JSON.");
+      }
+    } catch (e) {
+      throw Exception("Exception: $e");
+    }
+  }
+
+  @override
+  Future<List<ModuleModel>> fetchModules(
+    String userId,
+    String facultySubjectId,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse(AppConstants.subjectEndpoint),
+        body: {
+          'user_id': userId,
+          'faculty_subject_id': facultySubjectId,
+          'action': "fetchModules",
+        },
+      );
+
+      if (response.body.trim().startsWith("{") ||
+          response.body.trim().startsWith("[")) {
+        final data = json.decode(response.body);
+        if (response.statusCode == 200 && data['error'] != true) {
+          final List<dynamic> list = data['data'];
+          return list.map((json) => ModuleModel.fromJson(json)).toList();
         } else {
           throw Exception(data['message'] ?? AppConstants.errorGeneric);
         }

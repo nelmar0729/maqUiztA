@@ -28,8 +28,8 @@ class RepositoryImpl implements Repository {
   }
 
   @override
-  Future<List<QuestionModel>> fetchQuestions(int quizId) {
-    return remoteDataSource.fetchQuestions(quizId);
+  Future<List<QuestionModel>> fetchQuestions(int quizId, String userId) {
+    return remoteDataSource.fetchQuestions(quizId, userId);
   }
 
   @override
@@ -43,8 +43,8 @@ class RepositoryImpl implements Repository {
   }
 
   @override
-  Future<List<LeaderboardUser>> leaderboardByQuiz(int quizId) {
-    return remoteDataSource.leaderboardByQuiz(quizId);
+  Future<List<LeaderboardUser>> leaderboardByQuiz(int quizId, String userId) {
+    return remoteDataSource.leaderboardByQuiz(quizId, userId);
   }
 
   // You can add more methods here, like register(), getUserById(), etc.

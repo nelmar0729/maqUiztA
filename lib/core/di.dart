@@ -14,6 +14,9 @@ import '../features/auth/domain/usecases/is_enrolled.dart';
 // Services
 import '/features/auth/domain/services/auth_service.dart';
 
+// Router
+import '/core/routes/app_router.dart';
+
 final locator = GetIt.instance;
 
 void setupLocator() {
@@ -39,4 +42,7 @@ void setupLocator() {
   locator.registerLazySingleton<AuthService>(
     () => AuthService(locator<LocalAuthDataSource>(), locator<Isenrolled>()),
   );
+
+  // 5. Register Router (with navigatorKey!)
+  locator.registerLazySingleton<AppRouter>(() => AppRouter());
 }

@@ -60,13 +60,13 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     final result = await authService.checkAuthStatus();
     switch (result.status) {
       case AuthStatus.enrolled:
-        context.router.replace(const QuizterNavRoute());
+        context.router.replaceAll([const QuizterNavRoute()]);
         break;
       case AuthStatus.notProfiled:
-        context.router.replace(const ProfileSetupRoute());
+        context.router.replaceAll([const ProfileSetupRoute()]);
         break;
       case AuthStatus.notLoggedIn:
-        context.router.replace(const LoginRoute());
+        context.router.replaceAll([const LoginRoute()]);
         break;
     }
   }
@@ -110,7 +110,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
       }
     } catch (e) {
       if (!context.mounted) return;
-  
+
       AppSnack.show(context, e.toString(), SnackType.error);
     } finally {
       OverlayLoader.hide();

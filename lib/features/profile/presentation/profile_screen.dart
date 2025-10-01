@@ -149,6 +149,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                   ),
+                 
                   const SizedBox(height: 18),
                   Center(
                     child: Text(
@@ -229,7 +230,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       color: AppColors.primary,
                     ),
                     title: const Text(
-                      'Quiz History',
+                      'Quiz Answer Key',
                       style: AppTextStyles.bodyLarge,
                     ),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),

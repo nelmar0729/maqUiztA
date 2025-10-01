@@ -73,7 +73,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         );
       }
     } catch (e) {
-      return ResponseResult(success: false, message: "Exception: $e");
+      return ResponseResult(
+        success: false,
+        message:
+            "Something went wrong. Please try again. Kindly contact support if the issue persists.",
+      );
     }
   }
 
@@ -149,7 +153,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         );
       }
     } catch (e) {
-      return ResponseResult(success: false, message: "Exception: $e");
+      return ResponseResult(
+        success: false,
+        message:
+            "Something went wrong. Please try again. Kindly contact support if the issue persists.",
+      );
     }
   }
 

@@ -60,13 +60,13 @@ class _LoginScreenState extends State<LoginScreen> {
     final result = await authService.checkAuthStatus();
     switch (result.status) {
       case AuthStatus.enrolled:
-        context.router.replace(const QuizterNavRoute());
+        context.router.replaceAll([const QuizterNavRoute()]);
         break;
       case AuthStatus.notProfiled:
-        context.router.replace(const ProfileSetupRoute());
+        context.router.replaceAll([const ProfileSetupRoute()]);
         break;
       case AuthStatus.notLoggedIn:
-        context.router.replace(const LoginRoute());
+        context.router.replaceAll([const LoginRoute()]);
         break;
     }
   }
@@ -129,7 +129,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween, // 👈 pushes footer down
+        mainAxisAlignment:
+            MainAxisAlignment.spaceBetween, // 👈 pushes footer down
         children: [
           Expanded(
             child: SingleChildScrollView(
@@ -156,8 +157,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   // The rest of the form
                   Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 32,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -174,10 +177,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             children: [
                               PrimaryTextField(
                                 controller: _emailController,
-                                label: 'Email',
+                                label: 'Email or Student ID',
                                 prefixIcon: Icons.email_outlined,
-                                validator:
-                                    AppHelpers.required("Email is required!"),
+                                validator: AppHelpers.required(
+                                  "Email or Student ID is required!",
+                                ),
                               ),
                               const SizedBox(height: 20),
                               PasswordTextField(
@@ -192,8 +196,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 child: TextLinkButton(
                                   text: "Forgot password?",
                                   onPressed: () {
-                                    context.router
-                                        .push(const ForgotPasswordRoute());
+                                    context.router.push(
+                                      const ForgotPasswordRoute(),
+                                    );
                                   },
                                 ),
                               ),

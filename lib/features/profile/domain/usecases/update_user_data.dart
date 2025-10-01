@@ -1,7 +1,6 @@
 import '/features/profile/data/repositories/repository.dart';
 import '/features/auth/data/datasources/local_auth_datasource.dart';
 import '/shared/response.dart';
-import 'dart:io';
 
 class UpdateUserData {
   final Repository repository;
@@ -14,7 +13,7 @@ class UpdateUserData {
     required String lastname,
     required String studentId,
     required String email,
-    File? avatar, // nullable for image
+    dynamic avatar, // nullable for image
     required int programId,
     required String yearLevel,
     required String section,

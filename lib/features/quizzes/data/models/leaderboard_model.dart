@@ -22,7 +22,10 @@ class LeaderboardUser {
       lastName: json['last_name'],
       score: json['score'],
       totalAnswered: json['total_answered'],
-      avatar: json['avatar'],
+      avatar: (json['avatar'] ?? '').toString().replaceAll(
+        r'\/',
+        '/',
+      ), // ✅ clean URL
     );
   }
 

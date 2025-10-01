@@ -31,7 +31,7 @@ class AppTheme {
 
     // App bar styling
     appBarTheme: AppBarTheme(
-      color: AppColors.primary, // 🔴 Red AppBar
+      backgroundColor: AppColors.primary, // 🔴 Red AppBar
       iconTheme: IconThemeData(color: AppColors.textOnPrimary),
       titleTextStyle: TextStyle(
         color: AppColors.textOnPrimary,

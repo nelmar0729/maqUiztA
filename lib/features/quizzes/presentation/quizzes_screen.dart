@@ -32,6 +32,10 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
   String? _error;
   String? _userId;
   String _searchQuery = '';
+  DateTime? _lastUpdated;
+
+  Timer? _autoRefreshTimer;
+  Timer? _uiUpdateTimer;
 
   @override
   void initState() {
@@ -41,12 +45,29 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
     repositoryImpl = RepositoryImpl(remoteDataSource);
     fetchQuizzes = FetchQuizzes(repositoryImpl);
     _getUserData();
+
+    // ✅ Server refresh every 30 seconds
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      _loadQuizzes();
+    });
+
+    // ✅ UI refresh every second (for status updates)
+    _uiUpdateTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _autoRefreshTimer?.cancel();
+    _uiUpdateTimer?.cancel();
+    super.dispose();
   }
 
   void _getUserData() async {
     final userId = await localAuth.getUserId();
 
-    if (!mounted) return; // ✅ prevent setState after dispose
+    if (!mounted) return;
     setState(() {
       _userId = userId;
     });
@@ -56,22 +77,26 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
     }
   }
 
-  Future<void> _loadQuizzes() async {
+  Future<void> _loadQuizzes({bool showLoader = false}) async {
     if (!mounted) return;
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+
+    if (showLoader) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    }
 
     final quizzes = await safeApiCall<List<QuizModel>>(
       context,
-      () => fetchQuizzes(_userId ?? ""), // ✅ null safety
+      () => fetchQuizzes(_userId ?? ""),
     );
 
     if (!mounted) return;
     setState(() {
       if (quizzes != null) {
         _quizzes = quizzes;
+        _lastUpdated = DateTime.now();
       }
       _isLoading = false;
     });
@@ -79,7 +104,7 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
 
   Future<void> _navigateAndRefresh(QuizModel quiz) async {
     await context.pushRoute(StartQuizRoute(quiz: quiz));
-    await _loadQuizzes(); // this now uses safeApiCall
+    await _loadQuizzes();
   }
 
   List<QuizModel> get _filteredQuizzes {
@@ -115,6 +140,7 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
           ? Center(child: Text(_error!))
           : Column(
               children: [
+                // 🔍 Search bar
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
@@ -134,217 +160,242 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
                     onChanged: (val) => setState(() => _searchQuery = val),
                   ),
                 ),
+
+                // ⏱️ Last updated info
+                if (_lastUpdated != null)
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      left: 18,
+                      right: 18,
+                      bottom: 6,
+                    ),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        "Last updated: ${AppHelpers.formatInTimeZone(_lastUpdated!, 'Asia/Manila', pattern: 'HH:mm:ss')}",
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                // 📋 Quiz list
                 Expanded(
                   child: RefreshIndicator(
                     onRefresh: _loadQuizzes,
                     child: _filteredQuizzes.isEmpty
                         ? ListView(
-                            // ✅ make RefreshIndicator always usable
                             physics: const AlwaysScrollableScrollPhysics(),
                             children: const [
                               SizedBox(
-                                height: 300, // just to give pull-down space
+                                height: 300,
                                 child: Center(
                                   child: Text('No quizzes available.'),
                                 ),
                               ),
                             ],
                           )
-                        : ListView.builder(
+                        : ListView.separated(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 18,
                               vertical: 20,
                             ),
-                            physics:
-                                const AlwaysScrollableScrollPhysics(), // ✅ enable pull even if few items
+                            physics: const AlwaysScrollableScrollPhysics(),
                             itemCount: _filteredQuizzes.length,
                             itemBuilder: (context, index) {
                               final quiz = _filteredQuizzes[index];
-                              final now = DateTime.now();
-                              final scheduledAt =
-                                  quiz.scheduledAt ?? DateTime.now();
-                              final int totalQuestions =
-                                  quiz.totalQuestions ?? 1;
-                              final int timerPerQuestion =
-                                  quiz.timerPerQuestion ?? 15;
-                              final int totalDurationSeconds =
-                                  totalQuestions * timerPerQuestion;
-                              final end = scheduledAt.add(
-                                Duration(seconds: totalDurationSeconds),
-                              );
-
-                              // Status logic
-                              String status = "";
-                              Color statusColor;
-                              if (now.isBefore(scheduledAt)) {
-                                status = "Not Started";
-                                statusColor = Colors.grey;
-                              } else if (!now.isBefore(scheduledAt) &&
-                                  now.isBefore(end)) {
-                                status = "Ongoing";
-                                statusColor = Colors.blueAccent;
-                              } else {
-                                status = "Ended";
-                                statusColor = Colors.red;
-                              }
-
-                              // Faded card color
-                              final baseColor = quiz.color != null
-                                  ? Color(quiz.color!)
-                                  : Colors.white;
-                              final fadedCardColor = baseColor.withOpacity(
-                                0.16,
-                              );
-
-                              final titleColor =
-                                  baseColor.computeLuminance() > 0.5
-                                  ? Colors.black
-                                  : Colors.black87;
-
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 18),
-                                decoration: BoxDecoration(
-                                  color: fadedCardColor,
-                                  borderRadius: BorderRadius.circular(18),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.04),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ],
-                                ),
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    vertical: 16,
-                                    horizontal: 18,
-                                  ),
-                                  title: Text(
-                                    quiz.title,
-                                    style: AppTextStyles.titleMedium.copyWith(
-                                      color: titleColor,
-                                    ),
-                                  ),
-                                  subtitle: Padding(
-                                    padding: const EdgeInsets.only(top: 6.0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          quiz.description,
-                                          style: AppTextStyles.titleSmall
-                                              .copyWith(
-                                                color: titleColor.withOpacity(
-                                                  0.85,
-                                                ),
-                                              ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            const Icon(
-                                              Icons.schedule,
-                                              size: 16,
-                                              color: Colors.grey,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Expanded(
-                                              child: Text(
-                                                AppHelpers.formatInTimeZone(
-                                                  scheduledAt,
-                                                  'Asia/Manila',
-                                                  pattern: 'MMMM d, y H:mm',
-                                                ),
-                                                style: const TextStyle(
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w500,
-                                                  color: Colors.black87,
-                                                ),
-                                                overflow: TextOverflow.ellipsis,
-                                                maxLines: 1,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 2,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: statusColor.withOpacity(
-                                                  0.15,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                              ),
-                                              child: Text(
-                                                status,
-                                                style: TextStyle(
-                                                  color: statusColor,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              Icons.local_fire_department,
-                                              size: 18,
-                                              color: _getDifficultyColor(
-                                                quiz.difficulty ?? '',
-                                              ),
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              quiz.difficulty ?? '',
-                                              style: TextStyle(
-                                                fontFamily: 'Poppins',
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: 13,
-                                                color: _getDifficultyColor(
-                                                  quiz.difficulty ?? '',
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  trailing: ElevatedButton(
-                                    onPressed: () async {
-                                      await _navigateAndRefresh(quiz);
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primary,
-                                      foregroundColor: AppColors.accent,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      textStyle: AppTextStyles.titleMedium,
-                                    ),
-                                    child: Text(
-                                      status == "Ended"
-                                          ? "View"
-                                          : status == "Not Started"
-                                          ? "Details"
-                                          : "Start",
-                                    ),
-                                  ),
-                                ),
+                              return QuizCard(
+                                quiz: quiz,
+                                onTap: () async =>
+                                    await _navigateAndRefresh(quiz),
                               );
                             },
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 18),
                           ),
                   ),
                 ),
               ],
             ),
+    );
+  }
+}
+
+/// 🔹 Extracted widget for better performance
+/// 🔹 Extracted widget for better performance
+class QuizCard extends StatelessWidget {
+  final QuizModel quiz;
+  final VoidCallback onTap;
+
+  const QuizCard({super.key, required this.quiz, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final scheduledAt = quiz.scheduledAt ?? DateTime.now();
+    final int totalQuestions = quiz.totalQuestions ?? 1;
+    final int timerPerQuestion = quiz.timerPerQuestion ?? 15;
+    final int totalDurationSeconds = totalQuestions * timerPerQuestion;
+    final end = scheduledAt.add(Duration(seconds: totalDurationSeconds));
+
+    // Status logic
+    String status = "";
+    Color statusColor;
+    if (now.isBefore(scheduledAt)) {
+      status = "Not Started";
+      statusColor = Colors.grey;
+    } else if (!now.isBefore(scheduledAt) && now.isBefore(end)) {
+      status = "Ongoing";
+      statusColor = Colors.blueAccent;
+    } else {
+      status = "Ended";
+      statusColor = Colors.red;
+    }
+
+    // Card colors
+    final baseColor = quiz.color != null ? Color(quiz.color!) : Colors.white;
+    final fadedCardColor = baseColor.withOpacity(0.16);
+
+    final titleColor = baseColor.computeLuminance() > 0.5
+        ? Colors.black
+        : Colors.black87;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: fadedCardColor,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 16,
+            horizontal: 18,
+          ),
+          title: Text(
+            quiz.title,
+            style: AppTextStyles.titleMedium.copyWith(color: titleColor),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 6.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 🔹 Subject Code
+                if (quiz.subjectCode != null && quiz.subjectCode!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      "Subject Code: ${quiz.subjectCode}",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+
+                Text(
+                  quiz.description,
+                  style: AppTextStyles.titleSmall.copyWith(
+                    color: titleColor.withOpacity(0.85),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.schedule, size: 16, color: Colors.grey),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        AppHelpers.formatInTimeZone(
+                          scheduledAt,
+                          'Asia/Manila',
+                          pattern: 'MMMM d, y H:mm',
+                        ),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // 🔹 Animated status badge
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 400),
+                      transitionBuilder: (child, animation) {
+                        return SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0.0, 0.4),
+                            end: Offset.zero,
+                          ).animate(animation),
+                          child: FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: Container(
+                        key: ValueKey(status), // ✅ triggers animation
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: statusColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          status,
+                          style: TextStyle(
+                            color: statusColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.local_fire_department,
+                      size: 18,
+                      color: _getDifficultyColor(quiz.difficulty ?? ''),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      quiz.difficulty ?? '',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: _getDifficultyColor(quiz.difficulty ?? ''),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

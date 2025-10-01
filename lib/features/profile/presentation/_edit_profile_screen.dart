@@ -1,5 +1,7 @@
 import '/shared/util/network_utils.dart';
-import 'dart:io';
+import 'dart:typed_data'; // 👈 for web image
+import 'dart:io' show File; // 👈 safe import (not used on web)
+import 'package:flutter/foundation.dart' show kIsWeb; // 👈 detect platform
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:auto_route/auto_route.dart';
@@ -28,6 +30,7 @@ import '/features/auth/data/datasources/local_auth_datasource.dart';
 import '/features/profile/data/models/user_model.dart';
 import '/shared/app_colors.dart';
 import '/shared/response.dart';
+
 @RoutePage()
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -38,7 +41,10 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-  File? _imageFile;
+
+  // Images
+  File? _imageFile;       // For mobile/desktop
+  Uint8List? _webImage;   // For web
   final ImagePicker _picker = ImagePicker();
 
   // Controllers
@@ -92,7 +98,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       isLoadingPrograms = true;
     });
 
-    // Wrap both API calls with safeApiCall
     final fetchedUser = await safeApiCall<UserModel>(
       context,
       () => getUserData.call(),
@@ -131,9 +136,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<void> _pickImage() async {
     final picked = await _picker.pickImage(source: ImageSource.gallery);
     if (picked != null) {
-      setState(() {
-        _imageFile = File(picked.path);
-      });
+      if (kIsWeb) {
+        // On Web → store as bytes
+        final bytes = await picked.readAsBytes();
+        setState(() {
+          _webImage = bytes;
+          _imageFile = null;
+        });
+      } else {
+        // On Mobile/Desktop → store as File
+        setState(() {
+          _imageFile = File(picked.path);
+          _webImage = null;
+        });
+      }
     }
   }
 
@@ -148,7 +164,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         lastname: _lastNameController.text.trim(),
         studentId: _studentIdController.text.trim(),
         email: _emailController.text.trim(),
-        avatar: _imageFile,
+        avatar: kIsWeb ? _webImage : _imageFile, // 👈 pass right type
         programId: selectedProgram?.programId ?? 0,
         yearLevel: selectedYear ?? '',
         section: selectedSection ?? '',
@@ -205,16 +221,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
       ),
-
       body: isBusy
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _loadUserAndPrograms,
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 28,
-                  vertical: 32,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
                 child: Form(
                   key: _formKey,
                   child: ListView(
@@ -227,35 +239,41 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               radius: 52,
                               backgroundColor: Colors.grey.shade200,
                               child: ClipOval(
-                                child: _imageFile != null
-                                    ? Image.file(
-                                        _imageFile!,
+                                child: _webImage != null
+                                    ? Image.memory(
+                                        _webImage!,
                                         width: 104,
                                         height: 104,
                                         fit: BoxFit.cover,
                                       )
-                                    : (_avatarUrl?.isNotEmpty ?? false)
-                                    ? Image.network(
-                                        _avatarUrl!,
-                                        width: 104,
-                                        height: 104,
-                                        fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (context, error, stackTrace) {
-                                              return Image.asset(
+                                    : _imageFile != null
+                                        ? Image.file(
+                                            _imageFile!,
+                                            width: 104,
+                                            height: 104,
+                                            fit: BoxFit.cover,
+                                          )
+                                        : (_avatarUrl?.isNotEmpty ?? false)
+                                            ? Image.network(
+                                                _avatarUrl!,
+                                                width: 104,
+                                                height: 104,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (context, error, stackTrace) {
+                                                  return Image.asset(
+                                                    'assets/images/user.png',
+                                                    width: 104,
+                                                    height: 104,
+                                                    fit: BoxFit.cover,
+                                                  );
+                                                },
+                                              )
+                                            : Image.asset(
                                                 'assets/images/user.png',
                                                 width: 104,
                                                 height: 104,
                                                 fit: BoxFit.cover,
-                                              );
-                                            },
-                                      )
-                                    : Image.asset(
-                                        'assets/images/user.png',
-                                        width: 104,
-                                        height: 104,
-                                        fit: BoxFit.cover,
-                                      ),
+                                              ),
                               ),
                             ),
                             Positioned(
@@ -288,23 +306,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                       const SizedBox(height: 26),
 
-                      // Name, Email, Student ID
+                      // Text Fields
                       PrimaryTextField(
                         controller: _firstNameController,
                         label: 'First Name',
                         prefixIcon: Icons.person,
-                        validator: AppHelpers.required(
-                          "First name is required!",
-                        ),
+                        validator: AppHelpers.required("First name is required!"),
                       ),
                       const SizedBox(height: 22),
                       PrimaryTextField(
                         controller: _lastNameController,
                         label: 'Last Name',
                         prefixIcon: Icons.person,
-                        validator: AppHelpers.required(
-                          "Last name is required!",
-                        ),
+                        validator: AppHelpers.required("Last name is required!"),
                       ),
                       const SizedBox(height: 22),
                       PrimaryTextField(
@@ -316,9 +330,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           if (value == null || value.isEmpty) {
                             return 'Email is required!';
                           }
-                          if (!RegExp(
-                            r'^[\w\-.]+@([\w-]+\.)+[\w-]{2,4}$',
-                          ).hasMatch(value)) {
+                          if (!RegExp(r'^[\w\-.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
                             return 'Enter a valid email address';
                           }
                           return null;
@@ -331,30 +343,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         prefixIcon: Icons.badge,
                         validator: AppHelpers.multi([
                           AppHelpers.required('Please enter your student ID'),
-                          AppHelpers.studentId(
-                            'Invalid student ID (eg. XXXX-XXXX-A)',
-                          ),
+                          AppHelpers.studentId('Invalid student ID (eg. XXXX-XXXX-A)'),
                         ]),
                       ),
                       const SizedBox(height: 36),
+
                       // Program Dropdown
                       PrimaryDropdown<ProgramModel>(
                         value: selectedProgram,
                         label: "Program",
                         prefixIcon: Icons.school_rounded,
                         items: programOptions
-                            .map(
-                              (prog) => DropdownMenuItem(
-                                value: prog,
-                                child: Text(
-                                  prog.programCode,
-                                  style: AppTextStyles.bodyLarge,
-                                ),
-                              ),
-                            )
+                            .map((prog) => DropdownMenuItem(
+                                  value: prog,
+                                  child: Text(prog.programCode, style: AppTextStyles.bodyLarge),
+                                ))
                             .toList(),
-                        onChanged: (prog) =>
-                            setState(() => selectedProgram = prog),
+                        onChanged: (prog) => setState(() => selectedProgram = prog),
                         validator: (v) => v == null ? "Select a program" : null,
                       ),
                       const SizedBox(height: 22),
@@ -365,20 +370,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         label: "Year Level",
                         prefixIcon: Icons.star_rounded,
                         items: AppConstants.years
-                            .map(
-                              (year) => DropdownMenuItem(
-                                value: year,
-                                child: Text(
-                                  year,
-                                  style: AppTextStyles.bodyLarge,
-                                ),
-                              ),
-                            )
+                            .map((year) => DropdownMenuItem(
+                                  value: year,
+                                  child: Text(year, style: AppTextStyles.bodyLarge),
+                                ))
                             .toList(),
-                        onChanged: (year) =>
-                            setState(() => selectedYear = year),
-                        validator: (v) =>
-                            v == null ? "Select year level" : null,
+                        onChanged: (year) => setState(() => selectedYear = year),
+                        validator: (v) => v == null ? "Select year level" : null,
                       ),
                       const SizedBox(height: 22),
 
@@ -388,18 +386,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         label: "Section",
                         prefixIcon: Icons.group_rounded,
                         items: AppConstants.sections
-                            .map(
-                              (section) => DropdownMenuItem(
-                                value: section,
-                                child: Text(
-                                  section,
-                                  style: AppTextStyles.bodyLarge,
-                                ),
-                              ),
-                            )
+                            .map((section) => DropdownMenuItem(
+                                  value: section,
+                                  child: Text(section, style: AppTextStyles.bodyLarge),
+                                ))
                             .toList(),
-                        onChanged: (section) =>
-                            setState(() => selectedSection = section),
+                        onChanged: (section) => setState(() => selectedSection = section),
                         validator: (v) => v == null ? "Select section" : null,
                       ),
                       const SizedBox(height: 22),

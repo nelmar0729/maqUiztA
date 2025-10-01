@@ -29,7 +29,7 @@ class TodaysQuizzes extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 95,
+          height: 120, // 🔹 more height so title + code + status fit comfortably
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [for (final quiz in quizzes) QuizCard(quiz: quiz)],
@@ -125,14 +125,31 @@ class QuizCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Flexible(
-                child: Text(
-                  quiz.title,
-                  style: AppTextStyles.bodyLarge.copyWith(color: titleColor),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: true,
-                ),
+              // 🔹 Title + Subject Code stacked properly
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min, // ✅ avoids overflow
+                children: [
+                  Text(
+                    quiz.title,
+                    style: AppTextStyles.bodyLarge.copyWith(color: titleColor),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: true,
+                  ),
+                  const SizedBox(height: 4),
+                  if (quiz.subjectCode != null &&
+                      quiz.subjectCode!.isNotEmpty)
+                    Text(
+                      "Code: ${quiz.subjectCode}",
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
               ),
               const Spacer(),
               Row(

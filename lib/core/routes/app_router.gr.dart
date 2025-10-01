@@ -446,6 +446,147 @@ class StartQuizRouteArgs {
 }
 
 /// generated route for
+/// [SubjectDetailScreen]
+class SubjectDetailRoute extends PageRouteInfo<SubjectDetailRouteArgs> {
+  SubjectDetailRoute({
+    Key? key,
+    required SubjectModel subject,
+    List<PageRouteInfo>? children,
+  }) : super(
+         SubjectDetailRoute.name,
+         args: SubjectDetailRouteArgs(key: key, subject: subject),
+         initialChildren: children,
+       );
+
+  static const String name = 'SubjectDetailRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<SubjectDetailRouteArgs>();
+      return SubjectDetailScreen(key: args.key, subject: args.subject);
+    },
+  );
+}
+
+class SubjectDetailRouteArgs {
+  const SubjectDetailRouteArgs({this.key, required this.subject});
+
+  final Key? key;
+
+  final SubjectModel subject;
+
+  @override
+  String toString() {
+    return 'SubjectDetailRouteArgs{key: $key, subject: $subject}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! SubjectDetailRouteArgs) return false;
+    return key == other.key && subject == other.subject;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ subject.hashCode;
+}
+
+/// generated route for
+/// [SubjectModulesScreen]
+class SubjectModulesRoute extends PageRouteInfo<SubjectModulesRouteArgs> {
+  SubjectModulesRoute({
+    Key? key,
+    required SubjectModel subject,
+    List<PageRouteInfo>? children,
+  }) : super(
+         SubjectModulesRoute.name,
+         args: SubjectModulesRouteArgs(key: key, subject: subject),
+         initialChildren: children,
+       );
+
+  static const String name = 'SubjectModulesRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<SubjectModulesRouteArgs>();
+      return SubjectModulesScreen(key: args.key, subject: args.subject);
+    },
+  );
+}
+
+class SubjectModulesRouteArgs {
+  const SubjectModulesRouteArgs({this.key, required this.subject});
+
+  final Key? key;
+
+  final SubjectModel subject;
+
+  @override
+  String toString() {
+    return 'SubjectModulesRouteArgs{key: $key, subject: $subject}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! SubjectModulesRouteArgs) return false;
+    return key == other.key && subject == other.subject;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ subject.hashCode;
+}
+
+/// generated route for
+/// [SubjectQuizzesScreen]
+class SubjectQuizzesRoute extends PageRouteInfo<SubjectQuizzesRouteArgs> {
+  SubjectQuizzesRoute({
+    Key? key,
+    required SubjectModel subject,
+    List<PageRouteInfo>? children,
+  }) : super(
+         SubjectQuizzesRoute.name,
+         args: SubjectQuizzesRouteArgs(key: key, subject: subject),
+         initialChildren: children,
+       );
+
+  static const String name = 'SubjectQuizzesRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<SubjectQuizzesRouteArgs>();
+      return SubjectQuizzesScreen(key: args.key, subject: args.subject);
+    },
+  );
+}
+
+class SubjectQuizzesRouteArgs {
+  const SubjectQuizzesRouteArgs({this.key, required this.subject});
+
+  final Key? key;
+
+  final SubjectModel subject;
+
+  @override
+  String toString() {
+    return 'SubjectQuizzesRouteArgs{key: $key, subject: $subject}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! SubjectQuizzesRouteArgs) return false;
+    return key == other.key && subject == other.subject;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ subject.hashCode;
+}
+
+/// generated route for
 /// [SubjectsScreen]
 class SubjectsRoute extends PageRouteInfo<void> {
   const SubjectsRoute({List<PageRouteInfo>? children})

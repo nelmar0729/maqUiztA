@@ -10,14 +10,14 @@ import 'package:flutter/material.dart';
 class AppColors {
   // ---- Brand Colors ----
 
-  /// Primary brand color (Red)
-  static const Color primary = Color(0xFFFF1744);
+  /// Primary brand color (Fresh Green)
+  static const Color primary = Color(0xFF43A047); // Leafy green
 
-  /// Secondary brand color (Yellow)
-  static const Color secondary = Color(0xFFFFD600);
+  /// Secondary brand color (Lime / Fresh Accent)
+  static const Color secondary = Color(0xFFCDDC39); // Lime green
 
-  /// Accent / Supporting brand color (Blueish Grey)
-  static const Color accent = Color(0xFF789ABC);
+  /// Accent / Supporting brand color (Turquoise / Teal)
+  static const Color accent = Color(0xFF26A69A);
 
   /// Neutral / Background white
   static const Color neutral = Color(0xFFF9F9F9);
@@ -27,15 +27,15 @@ class AppColors {
   static const Color surface = Colors.white;
 
   // ---- Text Colors ----
-  static const Color textPrimary = Color(0xFF212121);
-  static const Color textSecondary = Color(0xFF757575);
+  static const Color textPrimary = Color(0xFF1B1B1B);
+  static const Color textSecondary = Color(0xFF616161);
   static const Color textOnPrimary = Colors.white;
   static const Color textOnSecondary = Colors.black87;
 
   // ---- States ----
-  static const Color success = Color(0xFF4CAF50);
-  static const Color warning = Color(0xFFFF9800);
-  static const Color error = Color(0xFFF44336);
+  static const Color success = Color(0xFF2E7D32); // Deep green
+  static const Color warning = Color(0xFFFFA000); // Amber
+  static const Color error = Color(0xFFE53935); // Strong red
 
   // ---- Disabled & Border ----
   static const Color disabled = Color(0xFFBDBDBD);

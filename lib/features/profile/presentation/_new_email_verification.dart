@@ -1,3 +1,5 @@
+import 'package:maquizta/core/routes/app_router.dart';
+
 import '/shared/util/network_utils.dart';
 import 'package:flutter/material.dart';
 //Widgets
@@ -57,7 +59,7 @@ class _NewEmailVerificationScreenState
 
     dataSource = DataSourceImpl();
     repositoryImpl = RepositoryImpl(dataSource);
-    verifyEmail = VerifyEmail(repositoryImpl);
+    verifyEmail = VerifyEmail(repositoryImpl, localAuth);
   }
 
   Future<void> handleVerifyEmail(String code) async {
@@ -94,7 +96,9 @@ class _NewEmailVerificationScreenState
       }
 
       AppSnack.show(context, result.message, SnackType.success);
-      context.router.pop(); // ✅ Auto-close on success
+      context.router.replace(
+        const QuizterNavRoute(),
+      ); // ✅ Auto-close on success
     } else {
       AppSnack.show(context, result.message, SnackType.error);
     }

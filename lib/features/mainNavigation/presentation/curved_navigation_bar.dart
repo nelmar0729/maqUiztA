@@ -1,4 +1,5 @@
-import '/shared/widgets/app_footer.dart'; // import this
+import '/shared/widgets/app_footer.dart';
+import '/shared/util/mobile_banner_ad.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
@@ -59,24 +60,35 @@ class QuizterNavScreen extends StatelessWidget {
       ],
       builder: (context, child) {
         final tabsRouter = AutoTabsRouter.of(context);
+
         return Scaffold(
           backgroundColor: const Color(0xFFF4F6FA),
+
+          // 👇 main tab content + footer (no nav bar here)
           body: Column(
             children: [
               Expanded(child: child),
-              const AppFooter(), // 👈 footer just above navigation bar
+              const AppFooter(), // your footer
             ],
           ),
-          bottomNavigationBar: CurvedNavigationBar(
-            backgroundColor: Colors.transparent,
-            color: AppColors.primary,
-            buttonBackgroundColor: Colors.white,
-            height: 60,
-            index: tabsRouter.activeIndex,
-            animationDuration: const Duration(milliseconds: 350),
-            animationCurve: Curves.easeInOut,
-            items: _navBarIcons(tabsRouter.activeIndex),
-            onTap: (index) => tabsRouter.setActiveIndex(index),
+
+          // 👇 sticky ad + curved nav bar at bottom
+          bottomNavigationBar: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const MobileBannerAd(), // ✅ banner ad always visible
+              CurvedNavigationBar(
+                backgroundColor: Colors.transparent,
+                color: AppColors.primary,
+                buttonBackgroundColor: Colors.white,
+                height: 60,
+                index: tabsRouter.activeIndex,
+                animationDuration: const Duration(milliseconds: 350),
+                animationCurve: Curves.easeInOut,
+                items: _navBarIcons(tabsRouter.activeIndex),
+                onTap: (index) => tabsRouter.setActiveIndex(index),
+              ),
+            ],
           ),
         );
       },
